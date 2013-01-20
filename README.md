@@ -15,7 +15,7 @@ It takes readings from the following sensors.
 It controls a number of solenoids with the 8 way channel relay shield from freetronics.
 http://www.freetronics.com/products/relay8-8-channel-relay-driver-shield
 
-The solenoids are from ebay 5/8" 
+The solenoids are from ebay 5/8" Barbed type 12 VDC
 http://www.ebay.com.au/itm/Electric-Solenoid-Valve-5-8-Barbs-Water-12-volt-12VDC-/300625215478#ht_2620wt_1030
 
 WARNING
