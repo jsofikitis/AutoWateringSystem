@@ -37,7 +37,7 @@
 
 #define ACTIVERELAYS 2
 #define INPIN 2
-#define LED 11
+#define MASTERLED 11
 
 //store temp & humidity
 typedef struct
@@ -48,13 +48,13 @@ typedef struct
 
 //store the date
 typedef struct {
-  byte second;
-  byte minute;
-  byte hour;
-  byte dayOfWeek;
-  byte dayOfMonth;
-  byte month;
-  byte year;
+  uint8_t second;
+  uint8_t minute;
+  uint8_t hour;
+  uint8_t dayOfWeek;
+  uint8_t dayOfMonth;
+  uint8_t month;
+  uint8_t year;
 } Date_t;
 
 /* Begin Variables */
@@ -76,7 +76,7 @@ Relay	Decimal	Binary
 7	64	01000000
 8	128	10000000
 */
-byte relay_arr [] = {1,2,4,8,16,32,64,128};
+uint8_t relay_arr [] = {1,2,4,8,16,32,64,128};
 
 /* End Variables */
 
@@ -86,7 +86,7 @@ void setup()
   // set up the input pin
   pinMode(INPIN, INPUT);
   // set up the output pin for the led
-  pinMode(LED, OUTPUT);
+  pinMode(MASTERLED, OUTPUT);
   
   // Set up the serial so messages can be shown
   Serial.begin(38400);
@@ -123,13 +123,13 @@ void getButton()
   buttonPressed = digitalRead(INPIN);
 }
 
-void lightLED(byte led)
+void lightLED(uint8_t led)
 {
   digitalWrite(led,HIGH);
   delay(1000);
 }
 
-void DimmLED(byte led)
+void DimmLED(uint8_t led)
 {
   digitalWrite(led,LOW);
   delay(1000);
@@ -218,7 +218,7 @@ void getTemp()
 }
 
 // Convert binary coded decimal to normal decimal numbers
-byte bcdToDec(byte val)
+uint8_t bcdToDec(uint8_t val)
 {
   return ( (val/16*10) + (val%16) );
 }
@@ -241,7 +241,7 @@ void getRTC()
   pD.year       = bcdToDec(Wire.read());
 }
 
-void writeToRelay(byte latchValue)
+void writeToRelay(uint8_t latchValue)
 {
   if (latchValue == 0)
   {
