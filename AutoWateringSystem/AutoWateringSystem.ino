@@ -92,18 +92,19 @@ Relay	Decimal	Binary
 */
 uint8_t relay_arr [] = {1,2,4,8,16,32,64,128};
 
-// Temp Threshold at 25 degrees
-uint8_t TEMP_THRESHOLD = 20;
-
-// Light threshold at 10%
-uint8_t LIGHT_THRESHOLD = 10;
 uint16_t lightLevel = 0;
 
 // All constants
-const uint8_t Zero = 0;
-const uint8_t OneHundred = 100;
+const uint8_t  Zero = 0;
+const uint8_t  OneHundred = 100;
+const uint16_t OneThousand = 1000;
 const uint16_t MaxAnalog = 1023;
-
+// Water delay in seconds
+const uint16_t  WATER_DELAY = 3;
+// Temp Threshold at 25 degrees
+const uint8_t TEMP_THRESHOLD = 20;
+// Light threshold at 10%
+const uint8_t LIGHT_THRESHOLD = 10;
 /* End Variables */
 
 /*    End Setter/Getter Functions */
@@ -164,7 +165,7 @@ void loop()
         {
           digitalWrite((RELAY1LED + i), HIGH);
           writeToRelay(relay_arr[i]);
-          delay(3000);
+          delay(WATER_DELAY * OneThousand);
           digitalWrite((RELAY1LED + i), LOW);
         }
        writeToRelay(0);
