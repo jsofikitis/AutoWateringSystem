@@ -35,9 +35,10 @@
 // Type of sensor
 #define DHTTYPE DHT22
 
-#define ACTIVERELAYS 2
-#define RAINPIN 2
 #define MASTERLED 13
+
+#define ACTIVERELAYS 5
+#define RAINPIN 4
 #define RELAY1LED 5
 #define RELAY2LED 6
 #define RELAY3LED 7
@@ -63,13 +64,20 @@ typedef struct {
   uint8_t year;
 } Date_t;
 
+//store the master switch
+//and rainsensor
+typedef struct{
+  uint8_t MD;
+  uint8_t RD;
+} Switch_t;
+
 /* Begin Variables */
 
 DHT dht(DHTPIN, DHTTYPE);
 TH_t THData;
 Date_t pD;
 
-int buttonPressed = 0;
+Switch_t SwitchOn = {0,0};
 
 /*
 Relay	Decimal	Binary
@@ -84,6 +92,18 @@ Relay	Decimal	Binary
 */
 uint8_t relay_arr [] = {1,2,4,8,16,32,64,128};
 
+// Temp Threshold at 25 degrees
+uint8_t TEMP_THRESHOLD = 20;
+
+// Light threshold at 10%
+uint8_t LIGHT_THRESHOLD = 10;
+uint16_t lightLevel = 0;
+
+// All constants
+const uint8_t Zero = 0;
+const uint8_t OneHundred = 100;
+const uint16_t MaxAnalog = 1023;
+
 /* End Variables */
 
 /*    End Setter/Getter Functions */
@@ -92,7 +112,7 @@ void setup()
   // set up the input pin
   pinMode(RAINPIN, INPUT);
   // set up the output pin for the master led
-  pinMode(MASTERLED, OUTPUT);
+  pinMode(MASTERLED, INPUT);
 
   for (uint8_t i = 0; i < ACTIVERELAYS; i++)
   {
@@ -100,6 +120,10 @@ void setup()
     Serial.println((i+1), DEC);
     // set up the output pins for the active relay leds 
     pinMode((RELAY1LED + i), OUTPUT);
+    // Initialise the LEDs
+    digitalWrite((RELAY1LED + i), HIGH);
+    delay(500);
+    digitalWrite((RELAY1LED + i), LOW);
   }
   
   // Set up the serial so messages can be shown
@@ -121,32 +145,71 @@ void setup()
 void loop()
 {
   // are we supposed to start
-  getButton(); 
+  readSwitch();
+  readlight();
+  //grab time and date
   getTemp();
   printTemp();
   getRTC();
   printTime();
-  writeToRelay(0);
-  // Setup a delay
+
+  // Master switch is on
+  if (SwitchOn.MD == HIGH)
+  { // No rain
+    if (SwitchOn.RD == LOW)
+    {
+      if ((THData.t >= TEMP_THRESHOLD) && (lightLevel <= LIGHT_THRESHOLD))
+      {
+        for (int i=0; i < ACTIVERELAYS; i++ )
+        {
+          digitalWrite((RELAY1LED + i), HIGH);
+          writeToRelay(relay_arr[i]);
+          delay(3000);
+          digitalWrite((RELAY1LED + i), LOW);
+        }
+       writeToRelay(0);
+      }
+      else if (THData.t < TEMP_THRESHOLD)
+      {
+        Serial.println("WARNING: Temperature below threshold");
+        //TODO Print time as well
+      }
+      else if (lightLevel > LIGHT_THRESHOLD)
+      {
+        Serial.println("WARNING: Light level above threshold");
+        //TODO Print time as well
+      }
+    }
+    else if (SwitchOn.RD == HIGH)
+    {
+      Serial.println("It's raining");
+      //TODO Print time as well
+
+    }
+  }
+  else
+  {
+    Serial.println("Master switch: OFF");
+    //TODO Print time as well
+  }
   delay(5000);
 }
 
 /*    Begin Setter/Getter Functions */
-void getButton()
+void readSwitch()
 {
-  buttonPressed = digitalRead(RAINPIN);
+  SwitchOn.MD = digitalRead(MASTERLED);
+  SwitchOn.RD = digitalRead(RAINPIN);
 }
 
-void lightLED(uint8_t led)
+void readlight()
 {
-  digitalWrite(led,HIGH);
-  delay(1000);
-}
-
-void DimmLED(uint8_t led)
-{
-  digitalWrite(led,LOW);
-  delay(1000);
+  lightLevel = analogRead(A0);
+  // Map the light level to 0 to 100
+  lightLevel = map(lightLevel,Zero,MaxAnalog,Zero,OneHundred);
+  Serial.print("[LightLevel: ");
+  Serial.print(lightLevel, DEC);
+  Serial.print(" %] ");
 }
 
 void printTemp()
