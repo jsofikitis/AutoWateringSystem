@@ -36,8 +36,14 @@
 #define DHTTYPE DHT22
 
 #define ACTIVERELAYS 2
-#define INPIN 2
-#define MASTERLED 11
+#define RAINPIN 2
+#define MASTERLED 13
+#define RELAY1LED 5
+#define RELAY2LED 6
+#define RELAY3LED 7
+#define RELAY4LED 8
+#define RELAY5LED 9
+
 
 //store temp & humidity
 typedef struct
@@ -84,9 +90,17 @@ uint8_t relay_arr [] = {1,2,4,8,16,32,64,128};
 void setup()
 {
   // set up the input pin
-  pinMode(INPIN, INPUT);
-  // set up the output pin for the led
+  pinMode(RAINPIN, INPUT);
+  // set up the output pin for the master led
   pinMode(MASTERLED, OUTPUT);
+
+  for (uint8_t i = 0; i < ACTIVERELAYS; i++)
+  {
+    Serial.print("Setting LED for relay ");
+    Serial.println((i+1), DEC);
+    // set up the output pins for the active relay leds 
+    pinMode((RELAY1LED + i), OUTPUT);
+  }
   
   // Set up the serial so messages can be shown
   Serial.begin(38400);
@@ -120,7 +134,7 @@ void loop()
 /*    Begin Setter/Getter Functions */
 void getButton()
 {
-  buttonPressed = digitalRead(INPIN);
+  buttonPressed = digitalRead(RAINPIN);
 }
 
 void lightLED(uint8_t led)
