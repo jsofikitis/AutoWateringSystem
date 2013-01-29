@@ -214,23 +214,15 @@ void readlight()
 }
 
 void printTemp()
-{
-  // check if returns are valid, if they are NaN (
-  // not a number) then something went wrong!
-  if (isnan(THData.t) || isnan(THData.h)) {
-    Serial.println("Failed to read from DHT");
-  } 
-  else 
-  {
-    Serial.print("[");
-    Serial.print("Humidity: ");
-    Serial.print(THData.h);
-    Serial.print(" % ");
-    Serial.print("Temperature: ");
-    Serial.print(THData.t);
-    Serial.print(" *C");
-    Serial.print("]");
-  }
+{ 
+  Serial.print("[");
+  Serial.print("Humidity: ");
+  Serial.print(THData.h);
+  Serial.print(" % ");
+  Serial.print("Temperature: ");
+  Serial.print(THData.t);
+  Serial.print(" *C");
+  Serial.print("]");
 }
 
 void printTime()
@@ -293,6 +285,14 @@ void getTemp()
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   THData.h = dht.readHumidity();
   THData.t = dht.readTemperature();
+
+  // check if returns are valid, if they are NaN (
+  // not a number) then something went wrong!
+  if (isnan(THData.t) || isnan(THData.h)) {
+    Serial.println("WARNING: Failed to read from DHT");
+    THData.h = 0;
+    THData.t = 0;
+  }
 }
 
 // Convert binary coded decimal to normal decimal numbers
