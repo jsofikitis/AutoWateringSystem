@@ -100,7 +100,10 @@ const uint8_t  OneHundred = 100;
 const uint16_t OneThousand = 1000;
 const uint16_t MaxAnalog = 1023;
 // Water delay in seconds
-const uint16_t  WATER_DELAY = 3;
+const uint8_t  WATER_DELAY = 3;
+//const uint16_t  WATER_DELAY = 15;
+//Watering period in days
+const uint8_t WATERING_PERIOD = 3;
 // Temp Threshold at 25 degrees
 const uint8_t TEMP_THRESHOLD = 20;
 // Light threshold at 10%
@@ -147,14 +150,9 @@ void setup()
 
 void loop()
 {
-  // are we supposed to start
-  readSwitch();
-  readlight();
-  //grab time and date
-  getTemp();
-  printTemp();
-  getRTC();
-  printTime();
+
+  // Read all the attached sensors
+  readsensors();
 
   // Master switch is on
   if (SwitchOn.MD == HIGH)
@@ -165,6 +163,13 @@ void loop()
       {
         for (int i=0; i < ACTIVERELAYS; i++ )
         {
+          // Read the sensors just in case something changed
+          readsensors();
+          if (SwitchOn.MD == LOW || SwitchOn.RD == LOW )
+          {
+            Serial.println("WARNING: Aborting watering sequence");
+            break;
+          }
           digitalWrite((RELAY1LED + i), HIGH);
           writeToRelay(relay_arr[i]);
           delay(WATER_DELAY * OneThousand);
@@ -175,27 +180,27 @@ void loop()
       else if (THData.t < TEMP_THRESHOLD)
       {
         Serial.println("WARNING: Temperature below threshold");
-        //TODO Print time as well
+        printTime();
       }
       else if (lightLevel > LIGHT_THRESHOLD)
       {
         Serial.println("WARNING: Light level above threshold");
-        //TODO Print time as well
+        printTime();
       }
     }
     else if (SwitchOn.RD == LOW)
     {
       Serial.println("It's raining");
-      //TODO Print time as well
-
+      printTime();
     }
   }
   else
   {
     Serial.println("Master switch: OFF");
-    //TODO Print time as well
+    printTime();
   }
   delay(5000);
+  //delay(86400*WATERING_PERIOD);
 }
 
 /*    Begin Setter/Getter Functions */
@@ -205,6 +210,16 @@ void readSwitch()
   SwitchOn.RD = digitalRead(RAINPIN);
 }
 
+void readsensors()
+{
+  // are we supposed to start
+  readSwitch();
+  readlight();
+  //grab time and date
+  getTemp();
+  printTemp();
+  getRTC();  
+}
 void readlight()
 {
   lightLevel = analogRead(A0);
@@ -213,6 +228,7 @@ void readlight()
   Serial.print("[LightLevel: ");
   Serial.print(lightLevel, DEC);
   Serial.print(" %] ");
+  Serial.println();
 }
 
 void printTemp()
@@ -225,6 +241,7 @@ void printTemp()
   Serial.print(THData.t);
   Serial.print(" *C");
   Serial.print("]");
+  Serial.println();
 }
 
 void printTime()
