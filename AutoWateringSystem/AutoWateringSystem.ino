@@ -112,6 +112,8 @@ void setup()
 {
   // set up the input pin
   pinMode(RAINPIN, INPUT);
+  digitalWrite(RAINPIN, HIGH);
+  
   // set up the output pin for the master led
   pinMode(MASTERLED, INPUT);
 
@@ -157,7 +159,7 @@ void loop()
   // Master switch is on
   if (SwitchOn.MD == HIGH)
   { // No rain
-    if (SwitchOn.RD == LOW)
+    if (SwitchOn.RD == HIGH)
     {
       if ((THData.t >= TEMP_THRESHOLD) && (lightLevel <= LIGHT_THRESHOLD))
       {
@@ -181,7 +183,7 @@ void loop()
         //TODO Print time as well
       }
     }
-    else if (SwitchOn.RD == HIGH)
+    else if (SwitchOn.RD == LOW)
     {
       Serial.println("It's raining");
       //TODO Print time as well
