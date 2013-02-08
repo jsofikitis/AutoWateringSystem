@@ -100,6 +100,7 @@ uint16_t lightLevel = 0;
 const uint8_t  Zero = 0;
 const uint8_t  OneHundred = 100;
 const uint16_t OneThousand = 1000;
+const uint32_t OneDay = 86400;
 const uint16_t MaxAnalog = 1023;
 // Water delay in seconds
 const uint8_t  WATER_DELAY = 3;
@@ -165,34 +166,25 @@ void loop()
       {
         for (int i=0; i < ACTIVERELAYS; i++ )
         {
-          // Read the sensors just in case something changed
-          readsensors();
-          if (SwitchOn.MD == LOW || SwitchOn.RD == LOW )
-          {
-            Serial.println("WARNING: Aborting watering sequence");
-            break;
-          }
-          digitalWrite((RELAY1LED + i), HIGH);
-          writeToRelay(relay_arr[i]);
-          delay(WATER_DELAY * OneThousand);
-          digitalWrite((RELAY1LED + i), LOW);
+          delayFor(WATER_DELAY, relay_arr[i], i);
         }
-       writeToRelay(0);
+        Serial.println("Resetting all relays");
+        writeToRelay(0);
       }
       else if (THData.t < TEMP_THRESHOLD)
       {
-        Serial.println("WARNING: Temperature below threshold");
+        //printMessage("WARNING: Temperature below threshold");
         printTime();
       }
       else if (lightLevel > LIGHT_THRESHOLD)
       {
-        Serial.println("WARNING: Light level above threshold");
+        //printMessage("WARNING: Light level above threshold");
         printTime();
       }
     }
     else if (SwitchOn.RD == LOW)
     {
-      Serial.println("It's raining");
+      //printMessage("WARNING: Aborting watering due to rain");
       printTime();
     }
   }
@@ -201,8 +193,57 @@ void loop()
     Serial.println("Master switch: OFF");
     printTime();
   }
-  delay(5000);
-  //delay(86400*WATERING_PERIOD);
+ gardendelayFor(5);
+
+//gardendelayfor(WATERING_PERIOD);
+}
+
+void delayFor (uint16_t seconds, uint8_t relaynum, uint8_t index)
+{
+  unsigned long start = millis();
+  unsigned long duration = seconds * OneThousand;
+  unsigned long printDelay = millis();
+
+  while (millis() - start <= duration)
+  {
+    // Read the sensors just in case something changed
+    readsensors();
+    if (SwitchOn.MD == LOW || SwitchOn.RD == LOW )
+    {
+      Serial.println("WARNING: Aborting watering sequence");
+      digitalWrite((RELAY1LED + index), LOW);
+      break;
+    }
+  
+    Serial.print("Activating Relay: ");
+    Serial.println(index + 1, DEC);
+
+    digitalWrite((RELAY1LED + index), HIGH);
+    writeToRelay(relaynum);
+  }
+
+  digitalWrite((RELAY1LED + index), LOW);
+}
+
+void gardendelayFor (uint8_t period)
+{
+  unsigned long start = millis();
+  //unsigned long duration = period * OneDay * OneThousand;
+  unsigned long duration = period * OneThousand;
+
+  unsigned long printDelay = OneThousand;
+  
+
+  while (millis() - start <= duration)
+  {
+    // Read the sensors just in case something changed
+    readsensors();
+    if (SwitchOn.MD == LOW || SwitchOn.RD == LOW )
+    {
+      Serial.println("WARNING: Aborting watering sequence due to sensor readings");
+      break;
+    }
+  }
 }
 
 /*    Begin Setter/Getter Functions */
@@ -217,19 +258,32 @@ void readsensors()
   // are we supposed to start
   readSwitch();
   readlight();
+  printlight();
   //grab time and date
   getTemp();
   printTemp();
   getRTC();  
 }
 void readlight()
-{
+{ 
   lightLevel = analogRead(A0);
   // Map the light level to 0 to 100
   lightLevel = map(lightLevel,Zero,MaxAnalog,Zero,OneHundred);
+}
+
+void printlight()
+{
   Serial.print("[LightLevel: ");
   Serial.print(lightLevel, DEC);
   Serial.print(" %] ");
+  Serial.println();
+}
+
+void printMessage(String message)
+{
+  Serial.print("[");
+  Serial.print(message);
+  Serial.print("[");
   Serial.println();
 }
 
@@ -342,15 +396,6 @@ void getRTC()
 
 void writeToRelay(uint8_t latchValue)
 {
-  if (latchValue == 0)
-  {
-    Serial.println("Resetting all relays");
-  }
-  else
-  {
-    Serial.print("Activating Relay: ");
-    Serial.println(latchValue,DEC);
-  }
   Wire.beginTransmission(RELAY_I2C_ADDR);
   Wire.write(0x12);        // Select GPIOA
   Wire.write(latchValue);  // Send value to bank A
