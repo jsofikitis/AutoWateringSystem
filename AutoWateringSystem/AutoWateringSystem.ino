@@ -35,16 +35,18 @@
 // Type of sensor
 #define DHTTYPE DHT22
 
+/////// LEDs ////////////
 #define MASTERLED 13
-
-#define ACTIVERELAYS 5
 #define RAINPIN 4
 #define RELAY1LED 5
 #define RELAY2LED 6
 #define RELAY3LED 7
 #define RELAY4LED 8
 #define RELAY5LED 9
+/////// LEDs ////////////
 
+// How many relays are connected
+#define ACTIVERELAYS 5
 
 //store temp & humidity
 typedef struct
