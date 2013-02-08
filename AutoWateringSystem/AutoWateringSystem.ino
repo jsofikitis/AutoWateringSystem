@@ -46,7 +46,7 @@
 /////// LEDs ////////////
 
 // How many relays are connected
-#define ACTIVERELAYS 5
+#define ACTIVERELAYS 2
 
 //store temp & humidity
 typedef struct
@@ -103,12 +103,13 @@ const uint16_t OneThousand = 1000;
 const uint32_t OneDay = 86400;
 const uint16_t MaxAnalog = 1023;
 // Water delay in seconds
-const uint8_t  WATER_DELAY = 3;
-//const uint16_t  WATER_DELAY = 15;
+//const uint8_t  WATER_DELAY = 3;
+//const uint8_t  WATER_DELAY = 60;
+const uint16_t  WATER_DELAY = 900;
 //Watering period in days
 const uint8_t WATERING_PERIOD = 3;
 // Temp Threshold at 25 degrees
-const uint8_t TEMP_THRESHOLD = 20;
+const uint8_t TEMP_THRESHOLD = 25;
 // Light threshold at 10%
 const uint8_t LIGHT_THRESHOLD = 10;
 /* End Variables */
