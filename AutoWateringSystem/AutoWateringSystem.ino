@@ -102,19 +102,32 @@ const uint8_t  OneHundred = 100;
 const uint16_t OneThousand = 1000;
 const uint32_t OneDay = 86400;
 const uint16_t MaxAnalog = 1023;
+const uint16_t PrintTime = 5000;
+
 // Water delay in seconds
 //const uint8_t  WATER_DELAY = 3;
 //const uint8_t  WATER_DELAY = 60;
 const uint16_t  WATER_DELAY = 900;
+
 //Watering period in days
 const uint8_t WATERING_PERIOD = 3;
+
 // Temp Threshold at 25 degrees
 const uint8_t TEMP_THRESHOLD = 25;
+
 // Light threshold at 10%
 const uint8_t LIGHT_THRESHOLD = 10;
+
+// Print timers
+unsigned long lastsensorprint = 0;
+
+
+/// Messages
+
+char *msg;
 /* End Variables */
 
-/*    End Setter/Getter Functions */
+
 void setup()
 {
   // set up the input pin
@@ -203,7 +216,6 @@ void delayFor (uint16_t seconds, uint8_t relaynum, uint8_t index)
 {
   unsigned long start = millis();
   unsigned long duration = seconds * OneThousand;
-  unsigned long printDelay = millis();
 
   while (millis() - start <= duration)
   {
@@ -232,9 +244,6 @@ void gardendelayFor (uint8_t period)
   //unsigned long duration = period * OneDay * OneThousand;
   unsigned long duration = period * OneThousand;
 
-  unsigned long printDelay = OneThousand;
-  
-
   while (millis() - start <= duration)
   {
     // Read the sensors just in case something changed
@@ -259,12 +268,19 @@ void readsensors()
   // are we supposed to start
   readSwitch();
   readlight();
-  printlight();
+  
   //grab time and date
   getTemp();
-  printTemp();
-  getRTC();  
+  
+  getRTC();
+
+  if (millis() > lastsensorprint)
+  {
+    printSensors();
+  }
 }
+
+
 void readlight()
 { 
   lightLevel = analogRead(A0);
@@ -280,11 +296,18 @@ void printlight()
   Serial.println();
 }
 
-void printMessage(String message)
+void printSensors()
 {
+  printlight();
+  printTemp();
+  lastsensorprint = millis() + PrintTime;
+}
+void printMessage(char * message)
+{
+  msg = message;
   Serial.print("[");
   Serial.print(message);
-  Serial.print("[");
+  Serial.print("]");
   Serial.println();
 }
 
@@ -402,3 +425,4 @@ void writeToRelay(uint8_t latchValue)
   Wire.write(latchValue);  // Send value to bank A
   Wire.endTransmission();
 }
+/*    End Setter/Getter Functions */
