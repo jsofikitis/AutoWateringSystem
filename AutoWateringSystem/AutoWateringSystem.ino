@@ -216,6 +216,7 @@ void loop()
 void delayFor (uint16_t seconds, uint8_t relaynum, uint8_t index)
 {
   unsigned long start = millis();
+  unsigned long lastprint = millis();
   unsigned long duration = seconds * OneThousand;
 
   while (millis() - start <= duration)
@@ -228,9 +229,13 @@ void delayFor (uint16_t seconds, uint8_t relaynum, uint8_t index)
       digitalWrite((RELAY1LED + index), LOW);
       break;
     }
-  
-    Serial.print("Activating Relay: ");
-    Serial.println(index + 1, DEC);
+
+    if (millis() > lastprint)
+    {
+      Serial.print("Activating Relay: ");
+      Serial.println(index + 1, DEC);
+      lastprint = millis() + PrintTime;
+    }
 
     digitalWrite((RELAY1LED + index), HIGH);
     writeToRelay(relaynum);
