@@ -117,13 +117,18 @@ const uint8_t TEMP_THRESHOLD = 25;
 
 // Light threshold at 10%
 const uint8_t LIGHT_THRESHOLD = 10;
+/// End constants
 
 // Print timers
 unsigned long lastsensorprint = 0;
-
+unsigned long lastmessageprint = 0;
 
 /// Messages
-
+char msg1 [] = "WARNING: Temperature below threshold";
+char msg2 [] = "WARNING: Light level above threshold";
+char msg3 [] = "WARNING: Aborting watering due to rain";
+char msg4 [] = "Master switch: OFF";
+char msg5 [] = "WARNING: Temperature below threshold";
 char *msg;
 /* End Variables */
 
@@ -187,25 +192,21 @@ void loop()
       }
       else if (THData.t < TEMP_THRESHOLD)
       {
-        //printMessage("WARNING: Temperature below threshold");
-        printTime();
+        printMessage(msg1);
       }
       else if (lightLevel > LIGHT_THRESHOLD)
       {
-        //printMessage("WARNING: Light level above threshold");
-        printTime();
+        printMessage(msg2);
       }
     }
     else if (SwitchOn.RD == LOW)
     {
-      //printMessage("WARNING: Aborting watering due to rain");
-      printTime();
+      printMessage(msg3);
     }
   }
   else
   {
-    Serial.println("Master switch: OFF");
-    printTime();
+    printMessage(msg4);
   }
  gardendelayFor(5);
 
@@ -270,9 +271,9 @@ void readsensors()
   readlight();
   
   //grab time and date
-  getTemp();
+  readTemp();
   
-  getRTC();
+  readRTC();
 
   if (millis() > lastsensorprint)
   {
@@ -280,12 +281,69 @@ void readsensors()
   }
 }
 
-
 void readlight()
 { 
   lightLevel = analogRead(A0);
   // Map the light level to 0 to 100
   lightLevel = map(lightLevel,Zero,MaxAnalog,Zero,OneHundred);
+}
+
+void readTemp()
+{
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  THData.h = dht.readHumidity();
+  THData.t = dht.readTemperature();
+
+  // check if returns are valid, if they are NaN (
+  // not a number) then something went wrong!
+  if (isnan(THData.t) || isnan(THData.h)) {
+    Serial.println("WARNING: Failed to read from DHT");
+    THData.h = 0;
+    THData.t = 0;
+  }
+}
+
+
+void readRTC()
+{
+  Wire.beginTransmission(RTC_I2C_ADDR);
+  Wire.write(0); // set DS3232 register pointer to 00h
+  Wire.endTransmission();
+  // request 7 bytes of data from DS3232 starting from register 00h
+  Wire.requestFrom(RTC_I2C_ADDR, 7); 
+
+  // A few of these need masks because certain bits are control bits
+  pD.second     = bcdToDec(Wire.read() & 0x7f);
+  pD.minute     = bcdToDec(Wire.read());
+  pD.hour       = bcdToDec(Wire.read() & 0x3f);  // Need to change this if 12 hour am/pm
+  pD.dayOfWeek  = bcdToDec(Wire.read());
+  pD.dayOfMonth = bcdToDec(Wire.read());
+  pD.month      = bcdToDec(Wire.read());
+  pD.year       = bcdToDec(Wire.read());
+}
+
+void writeToRelay(uint8_t latchValue)
+{
+  Wire.beginTransmission(RELAY_I2C_ADDR);
+  Wire.write(0x12);        // Select GPIOA
+  Wire.write(latchValue);  // Send value to bank A
+  Wire.endTransmission();
+}
+
+void printMessage(char * message)
+{
+  if (millis() > lastmessageprint)
+  {
+    msg = message;
+    Serial.print("[");
+    Serial.print(message);
+    Serial.print("]");
+    Serial.println();
+    printTime();
+
+    lastmessageprint = millis() + PrintTime;
+  }
 }
 
 void printlight()
@@ -301,14 +359,6 @@ void printSensors()
   printlight();
   printTemp();
   lastsensorprint = millis() + PrintTime;
-}
-void printMessage(char * message)
-{
-  msg = message;
-  Serial.print("[");
-  Serial.print(message);
-  Serial.print("]");
-  Serial.println();
 }
 
 void printTemp()
@@ -378,51 +428,10 @@ void printTime()
   Serial.println("]");
 }
 
-void getTemp()
-{
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  THData.h = dht.readHumidity();
-  THData.t = dht.readTemperature();
-
-  // check if returns are valid, if they are NaN (
-  // not a number) then something went wrong!
-  if (isnan(THData.t) || isnan(THData.h)) {
-    Serial.println("WARNING: Failed to read from DHT");
-    THData.h = 0;
-    THData.t = 0;
-  }
-}
-
 // Convert binary coded decimal to normal decimal numbers
 uint8_t bcdToDec(uint8_t val)
 {
   return ( (val/16*10) + (val%16) );
 }
-
-void getRTC()
-{
-  Wire.beginTransmission(RTC_I2C_ADDR);
-  Wire.write(0); // set DS3232 register pointer to 00h
-  Wire.endTransmission();
-  // request 7 bytes of data from DS3232 starting from register 00h
-  Wire.requestFrom(RTC_I2C_ADDR, 7); 
-
-  // A few of these need masks because certain bits are control bits
-  pD.second     = bcdToDec(Wire.read() & 0x7f);
-  pD.minute     = bcdToDec(Wire.read());
-  pD.hour       = bcdToDec(Wire.read() & 0x3f);  // Need to change this if 12 hour am/pm
-  pD.dayOfWeek  = bcdToDec(Wire.read());
-  pD.dayOfMonth = bcdToDec(Wire.read());
-  pD.month      = bcdToDec(Wire.read());
-  pD.year       = bcdToDec(Wire.read());
-}
-
-void writeToRelay(uint8_t latchValue)
-{
-  Wire.beginTransmission(RELAY_I2C_ADDR);
-  Wire.write(0x12);        // Select GPIOA
-  Wire.write(latchValue);  // Send value to bank A
-  Wire.endTransmission();
-}
 /*    End Setter/Getter Functions */
+/* END */
