@@ -258,12 +258,6 @@ void gardendelayFor (uint8_t period)
 }
 
 /*    Begin Setter/Getter Functions */
-void readSwitch()
-{
-  SwitchOn.MD = digitalRead(MASTERLED);
-  SwitchOn.RD = digitalRead(RAINPIN);
-}
-
 void readsensors()
 {
   // are we supposed to start
@@ -279,6 +273,12 @@ void readsensors()
   {
     printSensors();
   }
+}
+
+void readSwitch()
+{
+  SwitchOn.MD = digitalRead(MASTERLED);
+  SwitchOn.RD = digitalRead(RAINPIN);
 }
 
 void readlight()
@@ -303,7 +303,6 @@ void readTemp()
     THData.t = 0;
   }
 }
-
 
 void readRTC()
 {
