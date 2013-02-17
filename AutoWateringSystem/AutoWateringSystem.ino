@@ -137,11 +137,10 @@ void setup()
 {
   // set up the input pin
   pinMode(RAINPIN, INPUT);
+  pinMode(MASTERPIN, INPUT);
+  //active the pull up resistors.
   digitalWrite(RAINPIN, HIGH);
   
-  // set up the output pin for the master led
-  pinMode(MASTERPIN, INPUT);
-
   for (uint8_t i = 0; i < ACTIVERELAYS; i++)
   {
     Serial.print("Setting LED for relay ");
