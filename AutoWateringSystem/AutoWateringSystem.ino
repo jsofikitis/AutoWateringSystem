@@ -36,7 +36,7 @@
 #define DHTTYPE DHT22
 
 /////// LEDs ////////////
-#define MASTERLED 13
+#define MASTERPIN 3
 #define RAINPIN 4
 #define RELAY1LED 5
 #define RELAY2LED 6
@@ -140,7 +140,7 @@ void setup()
   digitalWrite(RAINPIN, HIGH);
   
   // set up the output pin for the master led
-  pinMode(MASTERLED, INPUT);
+  pinMode(MASTERPIN, INPUT);
 
   for (uint8_t i = 0; i < ACTIVERELAYS; i++)
   {
@@ -282,7 +282,7 @@ void readsensors()
 
 void readSwitch()
 {
-  SwitchOn.MD = digitalRead(MASTERLED);
+  SwitchOn.MD = digitalRead(MASTERPIN);
   SwitchOn.RD = digitalRead(RAINPIN);
 }
 
