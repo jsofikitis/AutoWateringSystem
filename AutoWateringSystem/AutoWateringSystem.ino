@@ -124,14 +124,28 @@ unsigned long lastsensorprint = 0;
 unsigned long lastmessageprint = 0;
 
 /// Messages
-char msg1 [] = "WARNING: Temperature below threshold";
-char msg2 [] = "WARNING: Light level above threshold";
-char msg3 [] = "WARNING: Aborting watering due to rain";
-char msg4 [] = "Master switch: OFF";
-char msg5 [] = "WARNING: Temperature below threshold";
-char *msg;
-/* End Variables */
+char msgs [] = {
+"WARNING: Temperature below threshold"
+"WARNING: Light level above threshold"
+"WARNING: Aborting watering due to rain"
+"Master switch: OFF"
+"WARNING: Temperature below threshold"};
 
+// Holds which messages to be printed
+// A bitset and a bitread are used to write
+// and read from the variable to print the messages
+uint8_t MessagesToPrint = 0;
+
+enum Messages
+{
+  Msg1 = 0,
+  Msg2,
+  Msg3,
+  Msg4,
+  Msg5,
+};
+
+/* End Variables */
 
 void setup()
 {
@@ -191,22 +205,24 @@ void loop()
       }
       else if (THData.t < TEMP_THRESHOLD)
       {
-        printMessage(msg1);
+        messageToPrint(Msg1);
       }
       else if (lightLevel > LIGHT_THRESHOLD)
       {
-        printMessage(msg2);
+        messageToPrint(Msg2);
       }
     }
     else if (SwitchOn.RD == LOW)
     {
-      printMessage(msg3);
+      messageToPrint(Msg3);
     }
   }
   else
   {
-    printMessage(msg4);
+    messageToPrint(Msg4);
   }
+
+  displayMessages();
  gardendelayFor(5);
 
 //gardendelayfor(WATERING_PERIOD);
@@ -334,19 +350,33 @@ void writeToRelay(uint8_t latchValue)
   Wire.endTransmission();
 }
 
-void printMessage(char * message)
+void displayMessages()
 {
+  // TODO: All the messages to printed HERE
   if (millis() > lastmessageprint)
   {
-    msg = message;
-    Serial.print("[");
-    Serial.print(message);
-    Serial.print("]");
-    Serial.println();
-    printTime();
+    for (uint8_t i = 0; i < 5; i++)
+    {
+      if (bitRead(MessagesToPrint, i) == HIGH)
+      {
+        Serial.print("[");
+        Serial.print(msgs[i]);
+        Serial.print("]");
+        Serial.println();
+        printTime();
+      }
+    }
 
     lastmessageprint = millis() + PrintTime;
   }
+}
+void messageToPrint(int message)
+{
+
+  bitSet(MessagesToPrint, message);
+  /*
+  
+  */
 }
 
 void printlight()
